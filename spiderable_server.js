@@ -16,10 +16,10 @@ Spiderable.userAgentRegExps = [
     /^facebookexternalhit/i, /^linkedinbot/i, /^twitterbot/i];
 
 // how long to let phantomjs run before we kill it
-var REQUEST_TIMEOUT = 15*1000;
+var REQUEST_TIMEOUT = 30*1000;
 // maximum size of result HTML. node's default is 200k which is too
 // small for our docs.
-var MAX_BUFFER = 5*1024*1024; // 5MB
+var MAX_BUFFER = 10*1024*1024; // 5MB
 
 // Exported for tests.
 Spiderable._urlForPhantom = function (siteAbsoluteUrl, requestUrl) {
@@ -59,7 +59,7 @@ WebApp.connectHandlers.use(function (req, res, next) {
       _.any(Spiderable.userAgentRegExps, function (re) {
         return re.test(req.headers['user-agent']); })) {
 
-    var url = Spiderable._urlForPhantom(Meteor.absoluteUrl(), req.url);
+    var url = Spiderable._urlForPhantom(req.headers['x-forwarded-proto'] + '://' + req.headers.host, req.url);
 
     // This string is going to be put into a bash script, so it's important
     // that 'url' (which comes from the network) can neither exploit phantomjs
@@ -108,7 +108,7 @@ WebApp.connectHandlers.use(function (req, res, next) {
        ("exec phantomjs " + phantomJsArgs + " /dev/stdin <<'END'\n" +
         phantomScript + "END\n")],
       {timeout: REQUEST_TIMEOUT, maxBuffer: MAX_BUFFER},
-      function (error, stdout, stderr) {
+      Meteor.bindEnvironment( function (error, stdout, stderr) {
         if (!error && /<html/i.test(stdout)) {
           res.writeHead(200, {'Content-Type': 'text/html; charset=UTF-8'});
           res.end(stdout);
@@ -122,7 +122,7 @@ WebApp.connectHandlers.use(function (req, res, next) {
 
           next();
         }
-      });
+      }));
   } else {
     next();
   }

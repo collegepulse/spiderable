@@ -3,19 +3,13 @@ var page = require('webpage').create();
 
 var isReady = function () {
   return page.evaluate(function () {
-    if (typeof Meteor === 'undefined'
-        || Meteor.status === undefined
-        || !Meteor.status().connected) {
-      return false;
+    if (typeof Meteor !== 'undefined'
+        && typeof(Meteor.status) !== 'undefined'
+        && Meteor.status().connected) {
+      Deps.flush();
+      return DDP._allSubscriptionsReady();
     }
-    if (typeof Package === 'undefined'
-        || Package.spiderable === undefined
-        || Package.spiderable.Spiderable === undefined
-        || !Package.spiderable.Spiderable._initialSubscriptionsStarted) {
-      return false;
-    }
-    Tracker.flush();
-    return DDP._allSubscriptionsReady();
+    return false;
   });
 };
 
