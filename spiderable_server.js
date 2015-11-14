@@ -59,7 +59,7 @@ WebApp.connectHandlers.use(function (req, res, next) {
       _.any(Spiderable.userAgentRegExps, function (re) {
         return re.test(req.headers['user-agent']); })) {
 
-    var url = Spiderable._urlForPhantom(req.headers['x-forwarded-proto'] + '://' + req.headers.host, req.url);
+    var url = Spiderable._urlForPhantom('http://' + req.headers.host, req.url);
 
     // This string is going to be put into a bash script, so it's important
     // that 'url' (which comes from the network) can neither exploit phantomjs
